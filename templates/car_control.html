@@ -18,52 +18,35 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
         }
 
         .main-container {
             display: flex;
-            gap: 30px;
-            max-width: 1200px;
+            flex-direction: column;
+            max-width: 800px;
             width: 100%;
             height: 100vh;
             max-height: 800px;
-        }
-
-        .video-container {
-            flex: 2;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
         }
 
-        .control-container {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        .video-section {
+            flex: 0 0 auto;
+            background: #000;
+            position: relative;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .video-title {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
+            align-items: center;
+            justify-content: center;
+            height: 480px;
         }
 
         .video-frame {
-            flex: 1;
-            background: #000;
-            border-radius: 15px;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
             position: relative;
             display: flex;
             align-items: center;
@@ -78,23 +61,22 @@
 
         .video-placeholder {
             color: #fff;
-            font-size: 18px;
+            font-size: 16px;
             text-align: center;
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
+        .control-section {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.98);
         }
 
         .status {
-            margin-bottom: 20px;
-            padding: 10px;
-            border-radius: 10px;
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 14px;
+            text-align: center;
         }
 
         .status.ready {
@@ -119,15 +101,15 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             grid-template-rows: 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 15px 0;
         }
 
         .control-btn {
-            padding: 20px;
+            padding: 15px 8px;
             border: none;
-            border-radius: 15px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -137,6 +119,10 @@
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .control-btn:hover {
@@ -194,10 +180,12 @@
         }
 
         .message {
-            margin-top: 20px;
-            padding: 10px;
+            margin-top: 10px;
+            padding: 8px 12px;
             border-radius: 8px;
             font-weight: bold;
+            font-size: 12px;
+            text-align: center;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -218,63 +206,42 @@
             border: 1px solid #f5c6cb;
         }
 
-        .instructions {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .instructions h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .instructions ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .instructions li {
-            margin: 5px 0;
-            padding-left: 15px;
-            position: relative;
-        }
-
-        .instructions li:before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: #007bff;
-        }
-
         @media (max-width: 768px) {
             .main-container {
-                flex-direction: column;
-                height: auto;
+                max-width: 100%;
             }
             
-            .video-container {
-                order: 2;
+            .video-frame img {
+                object-fit: cover;
             }
-            
-            .control-container {
-                order: 1;
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                max-width: 100%;
+                height: 100vh;
+                border-radius: 0;
             }
             
             .control-btn {
-                padding: 15px;
-                font-size: 14px;
+                padding: 12px 6px;
+                font-size: 12px;
+                min-height: 45px;
+            }
+            
+            .video-section {
+                height: 50vh;
+            }
+            
+            .video-frame img {
+                object-fit: cover;
             }
         }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <div class="video-container">
-            <div class="video-title">📹 实时视频</div>
+        <div class="video-section">
             <div class="video-frame">
                 <img id="video-stream" src="/video_feed" alt="实时视频流" 
                      onerror="this.style.display='none'; document.getElementById('video-placeholder').style.display='block';">
@@ -284,9 +251,7 @@
             </div>
         </div>
         
-        <div class="control-container">
-            <h1>🚗 小车控制</h1>
-            
+        <div class="control-section">
             <div id="status" class="status initializing">
                 正在初始化...
             </div>
@@ -310,19 +275,6 @@
             </div>
             
             <div id="message" class="message"></div>
-            
-            <div class="instructions">
-                <h3>📋 使用说明</h3>
-                <ul>
-                    <li><strong>按住按钮</strong>: 持续执行相应动作</li>
-                    <li><strong>松开按钮</strong>: 自动停止当前动作</li>
-                    <li><strong>前进</strong>: 小车以0.1m/s速度前进</li>
-                    <li><strong>后退</strong>: 小车以0.1m/s速度后退</li>
-                    <li><strong>左转</strong>: 小车前进同时左转0.5弧度</li>
-                    <li><strong>右转</strong>: 小车前进同时右转0.5弧度</li>
-                    <li><strong>停止</strong>: 立即停止小车运动</li>
-                </ul>
-            </div>
         </div>
     </div>
 
