@@ -5,7 +5,9 @@ import rospy
 import time
 import threading
 from geometry_msgs.msg import Twist
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, Response
+import cv2
+import numpy as np
 
 app = Flask(__name__)
 
@@ -14,6 +16,11 @@ pub = None
 is_ros_initialized = False
 current_command = None
 command_lock = threading.Lock()
+
+# 摄像头相关变量
+camera = None
+camera_lock = threading.Lock()
+camera_initialized = False
 
 def init_ros():
     """初始化ROS节点和发布者"""
@@ -124,11 +131,84 @@ def car_stop():
     set_current_command('stop')
     return True
 
+def init_camera():
+    """初始化摄像头"""
+    global camera, camera_initialized
+    
+    if not camera_initialized:
+        try:
+            # 尝试打开USB摄像头，通常设备号为0
+            camera = cv2.VideoCapture(0)
+            
+            # 设置摄像头参数
+            camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            camera.set(cv2.CAP_PROP_FPS, 30)
+            
+            if camera.isOpened():
+                camera_initialized = True
+                print("摄像头初始化成功")
+                return True
+            else:
+                print("无法打开摄像头")
+                return False
+        except Exception as e:
+            print(f"摄像头初始化失败: {e}")
+            return False
+    return True
+
+def get_camera_frame():
+    """获取摄像头帧"""
+    global camera, camera_initialized
+    
+    if not camera_initialized:
+        if not init_camera():
+            return None
+    
+    try:
+        with camera_lock:
+            if camera and camera.isOpened():
+                ret, frame = camera.read()
+                if ret:
+                    # 压缩图像为JPEG格式
+                    ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    if ret:
+                        return buffer.tobytes()
+        return None
+    except Exception as e:
+        print(f"获取摄像头帧失败: {e}")
+        return None
+
+def generate_video_frames():
+    """生成视频流帧"""
+    while True:
+        frame_data = get_camera_frame()
+        if frame_data:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_data + b'\r\n')
+        else:
+            # 如果无法获取帧，返回一个错误图像
+            error_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(error_frame, 'Camera Not Available', (200, 240), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            ret, buffer = cv2.imencode('.jpg', error_frame)
+            if ret:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+        
+        time.sleep(0.033)  # 约30FPS
+
 # Flask路由
 @app.route('/')
 def index():
     """主页"""
     return render_template('car_control.html')
+
+@app.route('/video_feed')
+def video_feed():
+    """视频流路由"""
+    return Response(generate_video_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/api/forward', methods=['POST'])
 def api_forward():
@@ -175,6 +255,13 @@ if __name__ == '__main__':
         print("ROS节点初始化成功")
     else:
         print("ROS节点初始化失败，但Web服务仍可启动")
+    
+    # 初始化摄像头
+    print("正在初始化摄像头...")
+    if init_camera():
+        print("摄像头初始化成功")
+    else:
+        print("摄像头初始化失败，视频功能将不可用")
     
     # 启动小车控制线程
     control_thread = threading.Thread(target=car_control_thread, daemon=True)

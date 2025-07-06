@@ -18,23 +18,76 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
-        .container {
+        .main-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+            height: 100vh;
+            max-height: 800px;
+        }
+
+        .video-container {
+            flex: 2;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-container {
+            flex: 1;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .video-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+            font-weight: bold;
             text-align: center;
-            max-width: 400px;
-            width: 90%;
+        }
+
+        .video-frame {
+            flex: 1;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-placeholder {
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
         }
 
         h1 {
             color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
+            margin-bottom: 20px;
+            font-size: 24px;
             font-weight: bold;
+            text-align: center;
         }
 
         .status {
@@ -74,7 +127,7 @@
             padding: 20px;
             border: none;
             border-radius: 15px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -170,7 +223,7 @@
             padding: 15px;
             background-color: #f8f9fa;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 12px;
             color: #666;
         }
 
@@ -186,7 +239,7 @@
 
         .instructions li {
             margin: 5px 0;
-            padding-left: 20px;
+            padding-left: 15px;
             position: relative;
         }
 
@@ -197,61 +250,79 @@
             color: #007bff;
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px;
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .video-container {
+                order: 2;
+            }
+            
+            .control-container {
+                order: 1;
             }
             
             .control-btn {
                 padding: 15px;
-                font-size: 16px;
-            }
-            
-            h1 {
-                font-size: 24px;
+                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚗 小车控制面板</h1>
-        
-        <div id="status" class="status initializing">
-            正在初始化...
+    <div class="main-container">
+        <div class="video-container">
+            <div class="video-title">📹 实时视频</div>
+            <div class="video-frame">
+                <img id="video-stream" src="/video_feed" alt="实时视频流" 
+                     onerror="this.style.display='none'; document.getElementById('video-placeholder').style.display='block';">
+                <div id="video-placeholder" class="video-placeholder" style="display: none;">
+                    摄像头未连接或不可用
+                </div>
+            </div>
         </div>
         
-        <div class="control-grid">
-            <button class="control-btn btn-left" data-action="turn_left" disabled>
-                ⬅️ 左转
-            </button>
-            <button class="control-btn btn-forward" data-action="forward" disabled>
-                ⬆️ 前进
-            </button>
-            <button class="control-btn btn-right" data-action="turn_right" disabled>
-                ➡️ 右转
-            </button>
-            <button class="control-btn btn-stop" data-action="stop" disabled>
-                ⏹️ 停止
-            </button>
-            <button class="control-btn btn-backward" data-action="backward" disabled>
-                ⬇️ 后退
-            </button>
-        </div>
-        
-        <div id="message" class="message"></div>
-        
-        <div class="instructions">
-            <h3>📋 使用说明</h3>
-            <ul>
-                <li><strong>按住按钮</strong>: 持续执行相应动作</li>
-                <li><strong>松开按钮</strong>: 自动停止当前动作</li>
-                <li><strong>前进</strong>: 小车以0.1m/s速度前进</li>
-                <li><strong>后退</strong>: 小车以0.1m/s速度后退</li>
-                <li><strong>左转</strong>: 小车前进同时左转0.5弧度</li>
-                <li><strong>右转</strong>: 小车前进同时右转0.5弧度</li>
-                <li><strong>停止</strong>: 立即停止小车运动</li>
-            </ul>
+        <div class="control-container">
+            <h1>🚗 小车控制</h1>
+            
+            <div id="status" class="status initializing">
+                正在初始化...
+            </div>
+            
+            <div class="control-grid">
+                <button class="control-btn btn-left" data-action="turn_left" disabled>
+                    ⬅️ 左转
+                </button>
+                <button class="control-btn btn-forward" data-action="forward" disabled>
+                    ⬆️ 前进
+                </button>
+                <button class="control-btn btn-right" data-action="turn_right" disabled>
+                    ➡️ 右转
+                </button>
+                <button class="control-btn btn-stop" data-action="stop" disabled>
+                    ⏹️ 停止
+                </button>
+                <button class="control-btn btn-backward" data-action="backward" disabled>
+                    ⬇️ 后退
+                </button>
+            </div>
+            
+            <div id="message" class="message"></div>
+            
+            <div class="instructions">
+                <h3>📋 使用说明</h3>
+                <ul>
+                    <li><strong>按住按钮</strong>: 持续执行相应动作</li>
+                    <li><strong>松开按钮</strong>: 自动停止当前动作</li>
+                    <li><strong>前进</strong>: 小车以0.1m/s速度前进</li>
+                    <li><strong>后退</strong>: 小车以0.1m/s速度后退</li>
+                    <li><strong>左转</strong>: 小车前进同时左转0.5弧度</li>
+                    <li><strong>右转</strong>: 小车前进同时右转0.5弧度</li>
+                    <li><strong>停止</strong>: 立即停止小车运动</li>
+                </ul>
+            </div>
         </div>
     </div>
 
