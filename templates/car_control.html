@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小车控制面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .status.ready {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.initializing {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .control-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-btn.active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-forward {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .btn-backward {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .btn-left {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .btn-right {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .btn-stop {
+            background: linear-gradient(45deg, #9E9E9E, #757575);
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .btn-stop:hover {
+            background: linear-gradient(45deg, #757575, #616161);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .instructions li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #007bff;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .control-btn {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 小车控制面板</h1>
+        
+        <div id="status" class="status initializing">
+            正在初始化...
+        </div>
+        
+        <div class="control-grid">
+            <button class="control-btn btn-left" data-action="turn_left" disabled>
+                ⬅️ 左转
+            </button>
+            <button class="control-btn btn-forward" data-action="forward" disabled>
+                ⬆️ 前进
+            </button>
+            <button class="control-btn btn-right" data-action="turn_right" disabled>
+                ➡️ 右转
+            </button>
+            <button class="control-btn btn-stop" data-action="stop" disabled>
+                ⏹️ 停止
+            </button>
+            <button class="control-btn btn-backward" data-action="backward" disabled>
+                ⬇️ 后退
+            </button>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="instructions">
+            <h3>📋 使用说明</h3>
+            <ul>
+                <li><strong>按住按钮</strong>: 持续执行相应动作</li>
+                <li><strong>松开按钮</strong>: 自动停止当前动作</li>
+                <li><strong>前进</strong>: 小车以0.1m/s速度前进</li>
+                <li><strong>后退</strong>: 小车以0.1m/s速度后退</li>
+                <li><strong>左转</strong>: 小车前进同时左转0.5弧度</li>
+                <li><strong>右转</strong>: 小车前进同时右转0.5弧度</li>
+                <li><strong>停止</strong>: 立即停止小车运动</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let isReady = false;
+        let currentAction = null;
+        let isPressed = false;
+        
+        // 检查服务状态
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('status');
+                const buttons = document.querySelectorAll('.control-btn');
+                
+                if (data.ros_initialized) {
+                    statusDiv.textContent = '✅ 系统就绪';
+                    statusDiv.className = 'status ready';
+                    buttons.forEach(btn => btn.disabled = false);
+                    isReady = true;
+                } else {
+                    statusDiv.textContent = '⏳ 正在初始化...';
+                    statusDiv.className = 'status initializing';
+                    buttons.forEach(btn => btn.disabled = true);
+                    isReady = false;
+                }
+            } catch (error) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.textContent = '❌ 连接失败';
+                statusDiv.className = 'status error';
+                console.error('状态检查失败:', error);
+            }
+        }
+        
+        // 发送控制指令
+        async function sendCommand(action) {
+            if (!isReady) {
+                showMessage('系统未就绪，请稍候...', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/${action}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误，请检查连接', 'error');
+                console.error('发送指令失败:', error);
+            }
+        }
+        
+        // 显示消息
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type} show`;
+            
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 3000);
+        }
+        
+        // 按钮按下事件
+        function handleButtonDown(action) {
+            if (!isReady || isPressed) return;
+            
+            isPressed = true;
+            currentAction = action;
+            
+            // 添加按下效果
+            const button = event.target;
+            button.classList.add('active');
+            
+            // 发送开始指令
+            sendCommand(action);
+        }
+        
+        // 按钮松开事件
+        function handleButtonUp() {
+            if (!isPressed) return;
+            
+            isPressed = false;
+            
+            // 移除按下效果
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // 发送停止指令
+            sendCommand('stop');
+            currentAction = null;
+        }
+        
+        // 初始化按钮事件
+        function initButtonEvents() {
+            const buttons = document.querySelectorAll('.control-btn');
+            
+            buttons.forEach(button => {
+                const action = button.getAttribute('data-action');
+                
+                // 鼠标事件
+                button.addEventListener('mousedown', () => handleButtonDown(action));
+                button.addEventListener('mouseup', handleButtonUp);
+                button.addEventListener('mouseleave', handleButtonUp);
+                
+                // 触摸事件（移动端）
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handleButtonDown(action);
+                });
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleButtonUp();
+                });
+                button.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    handleButtonUp();
+                });
+            });
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', function(event) {
+            if (!isReady || isPressed) return;
+            
+            let action = null;
+            switch(event.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    event.preventDefault();
+                    action = 'forward';
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    event.preventDefault();
+                    action = 'backward';
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    event.preventDefault();
+                    action = 'turn_left';
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    event.preventDefault();
+                    action = 'turn_right';
+                    break;
+                case ' ':
+                case 'Escape':
+                    event.preventDefault();
+                    action = 'stop';
+                    break;
+            }
+            
+            if (action) {
+                handleButtonDown(action);
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (!isPressed) return;
+            
+            switch(event.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                case 'w':
+                case 'W':
+                case 's':
+                case 'S':
+                case 'a':
+                case 'A':
+                case 'd':
+                case 'D':
+                    event.preventDefault();
+                    handleButtonUp();
+                    break;
+            }
+        });
+        
+        // 定期检查状态
+        checkStatus();
+        setInterval(checkStatus, 2000);
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            checkStatus();
+            initButtonEvents();
+        });
+    </script>
+</body>
+</html> 
